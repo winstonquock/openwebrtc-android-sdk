@@ -69,6 +69,11 @@ public class SessionDescriptions {
                 throw new InvalidDescriptionException("invalid jsep message type: " + type);
         }
 
+        return fromSessionDescription(descriptionType, sdp);
+    }
+
+    public static SessionDescription fromSessionDescription(SessionDescription.Type descriptionType, JSONObject sdp)
+            throws InvalidDescriptionException {
         JSONObject originator;
         try {
             originator = sdp.getJSONObject("originator");
@@ -106,6 +111,35 @@ public class SessionDescriptions {
         }
 
         return new SessionDescriptionImpl(descriptionType, sessionId, streamDescriptions);
+    }
+
+    public static SessionDescription fromSessionDescription(JSONObject sdpWithDescriptions) throws InvalidDescriptionException {
+        String type;
+        try {
+            type = sdpWithDescriptions.getString("type");
+        } catch (JSONException e) {
+            throw new InvalidDescriptionException("jsep message has no type", e);
+        }
+
+        SessionDescription.Type descriptionType;
+        switch (type) {
+            case "offer":
+                descriptionType = SessionDescription.Type.OFFER;
+                break;
+            case "answer":
+                descriptionType = SessionDescription.Type.ANSWER;
+                break;
+            default:
+                throw new InvalidDescriptionException("invalid jsep message type: " + type);
+        }
+
+        JSONObject sessionDescription;
+        try {
+            sessionDescription = sdpWithDescriptions.getJSONObject("sessionDescription");
+        } catch (JSONException e) {
+            throw new InvalidDescriptionException("sdp parsing failed, no sessionDescription", e);
+        }
+        return fromSessionDescription(descriptionType, sessionDescription);
     }
 
     private static StreamDescription mediaDescriptionJsonToStreamDescription(JSONObject json, int index) throws JSONException, InvalidDescriptionException {
